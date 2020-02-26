@@ -1,1 +1,1 @@
-# GOOEY-Neural-Nets
+# GOOEY-Neural-Nets: Function Approximator
