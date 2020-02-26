@@ -3,3 +3,6 @@
 ![](gui_demo.gif)
 
 ##Under-construction
+
+TODO: * add multiple optimizers
+      * add geometric functions
