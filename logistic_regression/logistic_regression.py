@@ -56,12 +56,17 @@ class my_model(nn.Module):
         self.hidden_layer = nn.Linear(width,width)
         self.output_layer = nn.Linear(width,output_size)
         self.num_layers = num_layers
+        self.output_size = output_size
         
     def forward(self,x):
         x = F.relu(self.input_layer(x))
         for i in range(self.num_layers):
             x = F.relu(self.hidden_layer(x))
-        pred = torch.sigmoid(self.output_layer(x))
+        
+        if self.output_size < 3:    
+            pred = torch.sigmoid(self.output_layer(x))
+        else:
+            pred = F.softmax(self.output_layer(x),dim = 1 )
         return pred
     
     def predict(self,x):
@@ -340,7 +345,6 @@ while 1:
         draw_status = None
     
     if draw_status:
-        
         
         net_fig_agg.flush_events()
         net_fig_agg.draw()
