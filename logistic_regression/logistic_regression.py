@@ -149,18 +149,22 @@ def train_network(net_fig_queue,stop_training_queue ):
                 net_plot.cla()
                 net_plot.set_title(f'epoch:{i}')
                 h = 0.02
-                x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-                y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+                x_span = np.linspace( min(X[:, 0]), max(X[:, 0]))
+                y_span = np.linspace( min(X[:, 1]), max(X[:, 1]))
                 global xx,yy,Z
-                xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+                xx, yy = np.meshgrid(x_span, y_span)
 
 
-                Z = np.array(model.predict( torch.Tensor(np.c_[xx.ravel(), yy.ravel()])))
+                Z = np.array(model.predict( torch.Tensor(np.c_[xx.ravel(), yy.ravel()]))).reshape(xx.shape)
                 # Put the result into a color plot
-                Z = Z.reshape(xx.shape)
-
+                net_plot.contourf(xx,yy,Z )
                 
-            
+                
+#                 net_plot.imshow(Z, interpolation='nearest',
+#                 extent=(xx.min(), xx.max(), yy.min(), yy.max()),
+#                 cmap = plt.cm.Dark2,
+#                 aspect='auto', origin='lower')
+                
                 colors = cm.seismic(np.linspace(0, 1, data.clusters))
                 for i,c in zip(range(data.clusters),colors):
                     net_plot.scatter(X[y==i,0],X[y==i,1],color = c )
@@ -337,19 +341,11 @@ while 1:
     
     if draw_status:
         
-        net_plot.imshow(Z, interpolation='nearest',
-                extent=(xx.min(), xx.max(), yy.min(), yy.max()),
-                cmap = plt.cm.Dark2,
-                aspect='auto', origin='lower')
+        
         net_fig_agg.flush_events()
         net_fig_agg.draw()
     
         loss_fig_agg.flush_events()
         loss_fig_agg.draw()
         
-        
-
-
-        
-
-
+    
