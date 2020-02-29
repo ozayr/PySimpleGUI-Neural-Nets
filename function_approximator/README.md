@@ -2,7 +2,7 @@
 
 ![](gui_demo.gif)
 
-##Under-construction
 
-TODO: * add multiple optimizers
+TODO: * add multiple optimizers : done 
       * add geometric functions
+      
