@@ -28,12 +28,9 @@ class Dataset(BaseDataset):
  
         
     def __getitem__(self, i):
-        x_data = torch.Tensor(self.X[i])
-        if self.clusters > 2:
-            y_data =  torch.Tensor([1 if self.y[i] == j else 0 for j in range(self.clusters)]).long()
-        else:
-            y_data = torch.Tensor([self.y[i]])
-#         print(y_data,self.y[i])
+        x_data = torch.tensor(self.X[i]).float()
+        y_data = torch.tensor(self.y[i])
+        
         return x_data,y_data
     
     def get_all_data(self):
@@ -57,16 +54,15 @@ class my_model(nn.Module):
         self.output_layer = nn.Linear(width,output_size)
         self.num_layers = num_layers
         self.output_size = output_size
+        self.binary = True if self.output_size < 3 else False
         
     def forward(self,x):
         x = F.relu(self.input_layer(x))
         for i in range(self.num_layers):
             x = F.relu(self.hidden_layer(x))
+            
+        pred = torch.sigmoid(self.output_layer(x)) if self.binary else self.output_layer(x)
         
-        if self.output_size < 3:    
-            pred = torch.sigmoid(self.output_layer(x))
-        else:
-            pred = F.softmax(self.output_layer(x),dim = 1 )
         return pred
     
     def predict(self,x):
@@ -74,7 +70,7 @@ class my_model(nn.Module):
         if pred.shape[1] > 2:
             return np.argmax(pred.data.numpy(),axis=1)
         else:
-            return [1 if p > 0.5 else 0 for p in pred ]
+            return np.round(pred.detach().numpy())
     
 
 
@@ -122,9 +118,10 @@ def train_network(net_fig_queue,stop_training_queue ):
             y_pred = model.forward(x)
     #         print( np.argmax(y,axis = 1), np.argmax(y_pred.data.numpy(), axis = 1) )
             if output_size > 2:
-                loss = criterion( y_pred,  np.argmax(y,axis = 1) )
+                loss = criterion( y_pred, y )
             else:
-                loss = criterion( y_pred,y)
+                loss = criterion( y_pred.view(-1),y.float())
+            
 
             optimizer.zero_grad()
             loss.backward()
@@ -146,10 +143,7 @@ def train_network(net_fig_queue,stop_training_queue ):
                 
                 epoch_num = i 
                 X = x.numpy()
-                if output_size > 2:
-                    y = np.argmax(y,axis=1).numpy()
-                else:
-                    y = y.view(1,-1).numpy()[0]
+                y = y.numpy()
 
                 net_plot.cla()
                 net_plot.set_title(f'epoch:{i}')
@@ -161,15 +155,9 @@ def train_network(net_fig_queue,stop_training_queue ):
 
 
                 Z = np.array(model.predict( torch.Tensor(np.c_[xx.ravel(), yy.ravel()]))).reshape(xx.shape)
-                # Put the result into a color plot
                 net_plot.contourf(xx,yy,Z )
                 
-                
-#                 net_plot.imshow(Z, interpolation='nearest',
-#                 extent=(xx.min(), xx.max(), yy.min(), yy.max()),
-#                 cmap = plt.cm.Dark2,
-#                 aspect='auto', origin='lower')
-                
+
                 colors = cm.seismic(np.linspace(0, 1, data.clusters))
                 for i,c in zip(range(data.clusters),colors):
                     net_plot.scatter(X[y==i,0],X[y==i,1],color = c )
